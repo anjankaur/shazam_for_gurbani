@@ -10,6 +10,9 @@ mysql-connector-python==8.2.0
 # HTTP requests (for GurbaniNow API proxy)
 requests==2.31.0
 
+# Testing utilities
+colorama==0.4.6
+
 # Utilities
 Werkzeug==3.0.1
 

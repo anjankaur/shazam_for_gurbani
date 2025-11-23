@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Loader2, Volume2 } from 'lucide-react';
+import { Loader2, Volume2, TestTube } from 'lucide-react';
 import HomeView from './components/HomeView';
 import ListeningView from './components/ListeningView';
 import ResultView from './components/ResultView';
+import APITestPanel from './components/APITestPanel';
 import { identifyShabad, fetchShabad, generateExplanation, generateVoiceExplanation } from './services/api';
 import { recordAudio } from './utils/audioUtils';
 import { base64ToUint8Array, pcm16ToWav } from './utils/audioUtils';
@@ -22,6 +23,9 @@ export default function App() {
   const [audioUrl, setAudioUrl] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioPlayerRef = useRef(null);
+
+  // Test Panel State
+  const [showTestPanel, setShowTestPanel] = useState(false);
 
   // Audio Refs
   const audioContextRef = useRef(null);
@@ -242,6 +246,13 @@ export default function App() {
           {isPlaying && (
             <span className="animate-pulse text-orange-500 text-xs font-bold uppercase">Speaking</span>
           )}
+          <button
+            onClick={() => setShowTestPanel(true)}
+            className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+            title="Test APIs"
+          >
+            <TestTube size={20} className="text-slate-600" />
+          </button>
         </div>
       </header>
 
@@ -312,6 +323,11 @@ export default function App() {
       <div className="bg-slate-900 text-slate-500 text-[10px] p-1 text-center font-mono">
         Status: {debugLog}
       </div>
+
+      {/* Test Panel */}
+      {showTestPanel && (
+        <APITestPanel onClose={() => setShowTestPanel(false)} />
+      )}
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Mukta+Mahee:wght@300;400;700&display=swap');
