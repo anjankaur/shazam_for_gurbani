@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Ask a Question
+    url: https://github.com/anjankaur/shazam_for_gurbani/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: Security Issue
+    url: https://github.com/anjankaur/shazam_for_gurbani/blob/main/SECURITY.md
+    about: Report security vulnerabilities privately

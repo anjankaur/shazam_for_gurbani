@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: gurbani_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-gurbani_db}
+      MYSQL_USER: ${DB_USER:-gurbani_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-password}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-db:/docker-entrypoint-initdb.d
+    networks:
+      - gurbani_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-rootpassword}"]
+      timeout: 20s
+      retries: 10
+
+  # Flask Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gurbani_backend
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_USER: ${DB_USER:-gurbani_user}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      DB_NAME: ${DB_NAME:-gurbani_db}
+      FLASK_PORT: 5000
+      FLASK_DEBUG: ${FLASK_DEBUG:-False}
+      GURBANI_API_URL: ${GURBANI_API_URL:-https://api.gurbaninow.com/v2}
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+      - ./audio_files:/app/audio_files
+      - backend_temp:/app/temp_audio
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - gurbani_network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gurbani_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      VITE_GURBANI_API_URL: ${VITE_GURBANI_API_URL:-https://api.gurbaninow.com/v2}
+      VITE_RECOGNITION_API_URL: ${VITE_RECOGNITION_API_URL:-http://localhost:5000}
+      VITE_GEMINI_API_KEY: ${VITE_GEMINI_API_KEY:-}
+    depends_on:
+      - backend
+    networks:
+      - gurbani_network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  mysql_data:
+    driver: local
+  backend_temp:
+    driver: local
+
+networks:
+  gurbani_network:
+    driver: bridge
